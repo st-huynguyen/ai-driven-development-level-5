@@ -1,0 +1,26 @@
+# Layer 2 of docs/level-5-enforcement.md. Installed by `pnpm install` (the "prepare" script).
+# Jobs run one after another: prettier and eslint both rewrite the same files.
+
+pre-commit:
+  jobs:
+    - name: prettier
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+    - name: eslint
+      glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+      run: pnpm exec eslint --fix --max-warnings 0 --no-warn-ignored {staged_files}
+      stage_fixed: true
+
+    - name: gitleaks
+      run: |
+        command -v gitleaks >/dev/null 2>&1 || { echo "gitleaks is not installed. Install it: brew install gitleaks"; exit 1; }
+        gitleaks git --pre-commit --staged --redact --no-banner --verbose
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: pnpm typecheck
+
+    - name: test
+      run: pnpm test

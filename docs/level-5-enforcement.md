@@ -32,6 +32,7 @@ _Chạy trong session của agent (máy local)._
 
 - **matcher `Bash`**
   - `rm -rf`, `git push --force`, `git reset --hard`
+  - Bỏ qua lớp 2: `--no-verify`, `git commit -n`, `LEFTHOOK=0`, đổi `core.hooksPath`, `lefthook uninstall`
   - Migrate / push DB khi không phải môi trường local
   - Lệnh chạm tới `.env*` (ví dụ `cat .env`)
 - **matcher `Read|Edit|MultiEdit|Write|Grep`**
@@ -60,18 +61,18 @@ _Chạy trên máy dev._
 
 ### 2a. `git commit`: `pre-commit` (< 30 giây)
 
-|              |                                                                                                                |
-| ------------ | -------------------------------------------------------------------------------------------------------------- |
-| **Cấu hình** | `lefthook.yml` → `pre-commit` (`parallel: true`)<br>Cài hook: `package.json` → `"prepare": "lefthook install"` |
-| **Thực thi** | Lefthook, chỉ trên `{staged_files}`, `stage_fixed: true`                                                       |
+|              |                                                                                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cấu hình** | `lefthook.yml` → `pre-commit`<br>Cài hook: `package.json` → `"prepare": "lefthook install"` (tự chạy khi `pnpm install`)<br>Yêu cầu trên máy: `brew install gitleaks` |
+| **Thực thi** | Lefthook, chỉ trên `{staged_files}`, `stage_fixed: true`. Các job chạy lần lượt (prettier và eslint cùng ghi vào một file nên không chạy song song)                   |
 
 **Kiểm tra:**
 
 - **Chất lượng**
-  - `prettier --write`
-  - `eslint --fix`
+  - `prettier --write --ignore-unknown`
+  - `eslint --fix --max-warnings 0` (chỉ file JS/TS)
 - **Bảo mật**
-  - `gitleaks git --pre-commit --staged`
+  - `gitleaks git --pre-commit --staged --redact` (máy chưa cài gitleaks → commit bị chặn kèm hướng dẫn cài)
 
 ### 2b. `git push`: `pre-push` (< 2 phút)
 
@@ -82,8 +83,8 @@ _Chạy trên máy dev._
 
 **Kiểm tra:**
 
-- `tsc --noEmit`
-- `vitest run`
+- `pnpm typecheck` (`next typegen && tsc --noEmit`, sinh type route trước khi typecheck)
+- `pnpm test` (`vitest run`)
 
 ---
 

@@ -19,8 +19,8 @@ S='(^|[;&|(][[:space:]]*)'
 # 1. Destructive commands
 if grep -qE "${S}(sudo[[:space:]]+)?rm[[:space:]]" <<<"$cmd"; then
   if grep -qE "${S}(sudo[[:space:]]+)?rm[[:space:]]+([^;&|]*[[:space:]])?-[a-zA-Z]*([rR][a-zA-Z]*f|f[a-zA-Z]*[rR])" <<<"$cmd" ||
-     { grep -qE "${S}(sudo[[:space:]]+)?rm[[:space:]][^;&|]*(-[a-zA-Z]*[rR]|--recursive)" <<<"$cmd" &&
-       grep -qE "${S}(sudo[[:space:]]+)?rm[[:space:]][^;&|]*(-[a-zA-Z]*f|--force)" <<<"$cmd"; }; then
+     { grep -qE "${S}(sudo[[:space:]]+)?rm[[:space:]]+([^;&|]*[[:space:]])?(-[a-zA-Z]*[rR]|--recursive)([[:space:]]|$)" <<<"$cmd" &&
+       grep -qE "${S}(sudo[[:space:]]+)?rm[[:space:]]+([^;&|]*[[:space:]])?(-[a-zA-Z]*f|--force)([[:space:]]|$)" <<<"$cmd"; }; then
     block "'rm -rf' is not allowed. Delete specific files without -rf, or ask the user to do it."
   fi
 fi
@@ -33,7 +33,17 @@ if grep -qE "${S}git[[:space:]]+reset[[:space:]][^;&|]*--hard" <<<"$cmd"; then
   block "'git reset --hard' discards work and is not allowed. Use 'git stash' or ask the user."
 fi
 
-# 2. DB migrate / push only against a local database
+# 2. Skipping the git hooks of layer 2
+if grep -qE "${S}([^[:space:];&|]+=[^[:space:];&|]*[[:space:]]+)*git[[:space:]][^;&|]*--no-verify" <<<"$cmd" ||
+   grep -qE "${S}git[[:space:]]+commit[[:space:]]([^;&|]*[[:space:]])?-[a-zA-Z]*n[a-zA-Z]*([[:space:]]|$)" <<<"$cmd"; then
+  block "skipping git hooks (--no-verify) is not allowed. Fix what the hook reports instead."
+fi
+if grep -qE "(^|[[:space:];&|(])LEFTHOOK=(0|false)([[:space:]]|$)" <<<"$cmd" ||
+   grep -qE "core\.hooksPath|${S}(pnpm[[:space:]]+(exec[[:space:]]+)?|npx[[:space:]]+)?lefthook[[:space:]]+uninstall" <<<"$cmd"; then
+  block "disabling or redirecting git hooks is not allowed. Fix what the hook reports instead."
+fi
+
+# 3. DB migrate / push only against a local database
 if grep -qE "(prisma[[:space:]]+(migrate|db[[:space:]]+(push|execute))|drizzle-kit[[:space:]]+(push|migrate))" <<<"$cmd"; then
   db_url="$(grep -oE 'DATABASE_URL=[^[:space:];&|]+' <<<"$cmd" | head -1 | cut -d= -f2- | tr -d "'\"")"
   [ -z "$db_url" ] && db_url="${DATABASE_URL:-}"
@@ -52,7 +62,7 @@ if grep -qE "(prisma[[:space:]]+(migrate|db[[:space:]]+(push|execute))|drizzle-k
   esac
 fi
 
-# 3. Commands that touch .env files (templates are allowed)
+# 4. Commands that touch .env files (templates are allowed)
 env_refs="$(grep -oE "(^|[[:space:]/'\"=<>:])\.env(\.[A-Za-z0-9_-]+)*" <<<"$cmd" | sed -E "s#^[[:space:]/'\"=<>:]##")"
 while IFS= read -r ref; do
   case "$ref" in

@@ -15,11 +15,15 @@ pnpm start        # serve the production build
 pnpm lint         # ESLint (flat config, eslint-config-next core-web-vitals + typescript + eslint-config-prettier)
 pnpm format       # Prettier, write fixes (defaults, .prettierrc.json is empty)
 pnpm format:check # Prettier, check only (for CI)
-pnpm exec tsc --noEmit    # type-check only
+pnpm typecheck    # next typegen && tsc --noEmit (route types first, then type-check)
+pnpm test         # Vitest, run once (config: vitest.config.mts, tests: *.test.ts next to the code)
+pnpm exec vitest run lib/format-price.test.ts   # a single test file
 pnpm exec next typegen    # regenerate route types (PageProps/LayoutProps) without dev/build
 ```
 
-No test runner is set up yet.
+## Git hooks (Lefthook)
+
+`lefthook.yml` is installed by `pnpm install` (the `prepare` script). `pre-commit` runs Prettier, ESLint and gitleaks on staged files; `pre-push` runs `pnpm typecheck` and `pnpm test`. gitleaks must be installed on the machine (`brew install gitleaks`). Never skip the hooks (`--no-verify`): fix what they report. Write commit messages with `git commit -F <file>` when the message mentions env file names, because `.claude/hooks/guard-bash.sh` blocks commands containing them.
 
 The user's global pnpm config has `minimum-release-age` (21 days), so `pnpm add <pkg>@latest` resolves to the newest version at least 21 days old, not the true latest. Respect this; don't override it.
 
