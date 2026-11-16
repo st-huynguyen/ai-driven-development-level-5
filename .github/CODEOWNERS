@@ -1,0 +1,34 @@
+# Layer 4 of docs/level-5-enforcement.md: files that set the rules of the game.
+# Owners get asked to review changes to them. The review becomes mandatory once
+# "Require review from Code Owners" is on in the main-protection ruleset, which stays
+# off while the repo has a single owner (an author cannot approve their own PR).
+# When several lines match a file, the last one wins.
+
+# Lint, type, format and test config
+/eslint.config.mjs          @st-huynguyen
+/tsconfig.json              @st-huynguyen
+/.prettierrc.json           @st-huynguyen
+/.prettierignore            @st-huynguyen
+/vitest.config.mts          @st-huynguyen
+/next.config.ts             @st-huynguyen
+
+# Scripts that CI runs, package manager and runtime versions
+/package.json               @st-huynguyen
+/pnpm-workspace.yaml        @st-huynguyen
+/.nvmrc                     @st-huynguyen
+
+# Ways to silence the security scanners (files may not exist yet)
+/.semgrepignore             @st-huynguyen
+/.gitleaks.toml             @st-huynguyen
+/.gitleaksignore            @st-huynguyen
+
+# Layer 1 agent hooks, layer 2 git hooks, layer 3 CI and checker scripts
+/.claude/                   @st-huynguyen
+/lefthook.yml               @st-huynguyen
+/scripts/                   @st-huynguyen
+/.github/                   @st-huynguyen
+
+# Instructions that steer the agents, and the enforcement plan itself
+/CLAUDE.md                  @st-huynguyen
+/AGENTS.md                  @st-huynguyen
+/docs/level-5-enforcement.md @st-huynguyen

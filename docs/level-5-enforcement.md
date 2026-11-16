@@ -128,22 +128,60 @@ _Chạy trên GitHub server._
 
 ### Khi merge PR vào `main`, và mọi lần push vào `main` (tức thì)
 
-|              |                                                                                                                                                |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mục đích** | Đảm bảo không có code nào vào `main` mà chưa qua CI xanh và review của người. Lớp này biến kết quả của lớp 3 thành điều kiện bắt buộc để merge |
-| **Cấu hình** | GitHub → Settings → Rules → Rulesets (target: `main`)<br>`.github/CODEOWNERS`                                                                  |
-| **Thực thi** | GitHub; điều kiện chưa đủ → nút Merge bị khóa                                                                                                  |
+|              |                                                                                                                                                                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mục đích** | Đảm bảo không có code nào vào `main` mà chưa qua CI xanh và review của người. Lớp này biến kết quả của lớp 3 thành điều kiện bắt buộc để merge                                                              |
+| **Cấu hình** | Ruleset `main-protection`: owner tạo trên GitHub UI (Settings → Rules → Rulesets) theo checklist bên dưới, không lưu thành file trong repo<br>`.github/CODEOWNERS`: các file "luật chơi" và owner của chúng |
+| **Thực thi** | GitHub; điều kiện chưa đủ → nút Merge bị khóa                                                                                                                                                               |
 
 **Kiểm tra:**
 
 - **Điều kiện để merge**
   - Bắt buộc qua pull request
-  - Required status checks: các job 3a–3d xanh
+  - Required status checks: 8 job của lớp 3 xanh (3d thêm vào khi có)
   - Nhánh phải cập nhật theo `main`
-  - Ít nhất 1 approval
-  - Code owner duyệt file config (cần cả file `CODEOWNERS` và bật "Require review from Code Owners" trong ruleset)
+  - Approval: **0** khi repo chỉ có một người, đặt **1** khi có thêm người có quyền write
+  - Code owner duyệt các file trong `.github/CODEOWNERS`: **tạm tắt** khi chỉ có một owner, vì tác giả không tự approve PR của mình được
 - **Bảo vệ nhánh**
   - Cấm force push, cấm xóa nhánh
   - Danh sách bypass để trống
+
+### Checklist tạo ruleset `main-protection` (owner làm trên GitHub)
+
+- **Enforcement status:** Active · **Bypass list:** để trống
+- **Target branches:** Add target → _Include default branch_
+- ✓ **Restrict deletions**
+- ✓ **Block force pushes**
+- ✓ **Require a pull request before merging**
+  - Required approvals: **0**
+  - ✓ Dismiss stale pull request approvals when new commits are pushed
+  - ☐ Require review from Code Owners (bật khi có owner thứ hai)
+  - ✓ Require conversation resolution before merging
+- ✓ **Require status checks to pass**
+  - ✓ Require branches to be up to date before merging
+  - 8 check, nguồn **GitHub Actions**, tên phải khớp tên job: `lint`, `typecheck`, `test`, `build`, `suppressions`, `gitleaks`, `semgrep`, `dependency-review`
+- Để trống **Restrict updates** (rule này chặn cả việc merge PR)
+
+### Khi nào đổi cấu hình
+
+| Tình huống                           | Đổi gì                                                                                         |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Có thêm người có quyền write         | Required approvals → 1                                                                         |
+| `CODEOWNERS` có từ hai owner trở lên | Bật _Require review from Code Owners_ và _Require approval of the most recent reviewable push_ |
+| Thêm hoặc đổi tên job trong `ci.yml` | Cập nhật danh sách required checks cho khớp tên, nếu không PR sẽ chờ mãi một check không chạy  |
+| Có job 3d (reviewer agent)           | Thêm check của job đó vào danh sách                                                            |
+
+### Kiểm chứng lớp 4 đang hoạt động
+
+| Kiểm tra                         | Lệnh hoặc chỗ xem                                                                       | Kỳ vọng                                                                                                       |
+| -------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Rule có hiệu lực trên `main`     | `gh api repos/<owner>/<repo>/rules/branches/main --jq '.[].type'`                       | `deletion`, `non_fast_forward`, `pull_request`, `required_status_checks`                                      |
+| Đủ 8 check bắt buộc              | Như trên, lọc `required_status_checks` → `.parameters.required_status_checks[].context` | Đúng 8 tên                                                                                                    |
+| PR đủ điều kiện thì merge được   | `gh pr view <n> --json mergeStateStatus` (PR không phải draft, 8 check xanh)            | `CLEAN`                                                                                                       |
+| PR có check đỏ bị chặn           | `gh pr view <n> --json mergeStateStatus` (PR không phải draft, có check bắt buộc đỏ)    | `BLOCKED`, trên UI hiện _"Merging is blocked"_                                                                |
+| `CODEOWNERS` hợp lệ              | `gh api repos/<owner>/<repo>/codeowners/errors`                                         | `{"errors":[]}`                                                                                               |
+| Push thẳng vào `main` bị từ chối | `git push origin HEAD:main` (chỉ thử khi các mục trên đã đạt)                           | `GH013: Repository rule violations found for refs/heads/main` … _Changes must be made through a pull request_ |
+
+> Admin vẫn có thể sửa hoặc tắt ruleset. Mọi thay đổi ruleset nên được báo cho team và cập nhật lại checklist này.
 
 > Lưu ý: private repo trên gói GitHub Free không dùng được rulesets. Cần gói Team hoặc Enterprise.

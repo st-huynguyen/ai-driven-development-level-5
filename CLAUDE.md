@@ -29,6 +29,10 @@ pnpm exec next typegen    # regenerate route types (PageProps/LayoutProps) witho
 
 `.github/workflows/ci.yml` runs on every pull request and on pushes to `main`, one job per status check: `lint`, `typecheck`, `test`, `build`, `suppressions`, `gitleaks`, `semgrep`, `dependency-review`. Shared setup lives in `.github/actions/setup`. `suppressions` fails when a change adds `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `nosemgrep` or `gitleaks:allow`; check locally with `scripts/check-suppressions.sh main`. Pin every action to the full commit SHA of a release at least 21 days old, with the tag in a comment (`uses: owner/action@<sha> # vX.Y.Z`); semgrep fails on tag-only pins.
 
+## Merge policy (GitHub)
+
+`main` is protected by the `main-protection` ruleset, created by the owner in the GitHub UI (not stored in the repo; the checklist is in `docs/level-5-enforcement.md`). Changes reach `main` only through a pull request with all 8 checks green and the branch up to date; force push and deletion are blocked. If you rename or add a CI job, the required check list in the ruleset must be updated by the owner, so say so in the PR. `.github/CODEOWNERS` lists the files that set the rules (lint/type/format config, `package.json`, hooks, CI, scripts, agent instructions); changing them needs the owner's attention, so call them out in the PR description.
+
 Tests for the hook and CI scripts: `bash .claude/hooks/test-guards.sh`, `bash .claude/hooks/test-format-lint.sh`, `bash scripts/check-suppressions.test.sh`.
 
 The user's global pnpm config has `minimum-release-age` (21 days), so `pnpm add <pkg>@latest` resolves to the newest version at least 21 days old, not the true latest. Respect this; don't override it.
