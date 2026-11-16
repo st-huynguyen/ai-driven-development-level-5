@@ -56,6 +56,7 @@ bash_case block '/usr/bin/git reset --hard'
 bash_case allow 'git -C ../other push origin feature/coupon'
 bash_case allow 'git -C ../other status'
 bash_case allow 'git log --oneline -- push'
+bash_case allow "$(printf 'cat > msg.txt <<EOF\n- rm -rf is now blocked\n- git push --force too\nEOF')"
 bash_case allow 'rm app/old-page.tsx'
 bash_case allow 'rm app/l2-demo-format.ts app/re-fetch.ts'
 bash_case allow 'rm -r app/old-dir'

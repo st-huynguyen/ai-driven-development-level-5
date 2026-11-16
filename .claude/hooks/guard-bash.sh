@@ -17,10 +17,11 @@ block() {
 
 # Start of a command: line start, after ; & | ( ` {, or after a keyword or wrapper that runs the
 # next word as a command (do rm, then rm, xargs rm, find -exec rm, sudo rm, env rm, ...).
-# Then any options or VAR=value words (xargs -0 rm, FOO=1 git commit).
+# Then any VAR=value words (FOO=1 git commit); after a wrapper also its options (xargs -0 rm).
+V='([A-Za-z_][A-Za-z0-9_]*=[^[:space:];&|]*[[:space:]]+)*'
 W='(-[^[:space:];&|]*[[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:];&|]*[[:space:]]+)*'
 WRAP='do|then|else|elif|xargs|-exec|-execdir|-ok|exec|command|builtin|env|nohup|time|nice|sudo|doas'
-S="(^|[;&|(\`{]|(^|[[:space:];&|(\`{])(${WRAP})[[:space:]])[[:space:]]*${W}"
+S="((^|[;&|(\`{])[[:space:]]*${V}|(^|[[:space:];&|(\`{])(${WRAP})[[:space:]]+${W})"
 # rm, also as /bin/rm or \rm.
 RM="${S}"'([^[:space:];&|]*/)?\\?rm'
 # git plus global options before the subcommand (git -C dir, git -c key=value, git --no-pager).
