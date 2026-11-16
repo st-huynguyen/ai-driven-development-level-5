@@ -46,7 +46,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm build
 
-  # 3b · Anti-bypass: no new eslint-disable, @ts-ignore, nosemgrep, ...
+  # 3b · Anti-bypass: no new comments that switch a check off (list in scripts/check-suppressions.sh)
   suppressions:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
