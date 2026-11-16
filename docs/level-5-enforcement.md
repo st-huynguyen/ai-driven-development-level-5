@@ -98,7 +98,7 @@ _Chạy trên GitHub Actions runner._
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Mục đích** | Kiểm tra đầy đủ trên môi trường sạch, không phụ thuộc máy của ai. Bắt những gì lọt qua local (hook bị tắt, `--no-verify`), các thủ thuật lách check, và lỗ hổng bảo mật                                                                |
 | **Cấu hình** | `.github/workflows/ci.yml` (job 3a, 3b, 3c)<br>`.github/actions/setup/action.yml` (cài pnpm, Node theo `.nvmrc`, dependencies)<br>`.github/workflows/claude-review.yml` (job 3d, làm ở PR sau)<br>Secret: `ANTHROPIC_API_KEY` (cho 3d) |
-| **Thực thi** | GitHub Actions; mỗi job → một status check trên PR. Version action được pin vào bản phát hành ít nhất 21 ngày                                                                                                                          |
+| **Thực thi** | GitHub Actions; mỗi job → một status check trên PR. Action được pin theo commit SHA đầy đủ (tag ghi trong comment) của bản phát hành ít nhất 21 ngày, vì tag có thể bị dời sang commit khác                                            |
 
 **Kiểm tra** (tên job = tên status check):
 

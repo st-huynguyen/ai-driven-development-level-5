@@ -1,6 +1,6 @@
 # Layer 3 of docs/level-5-enforcement.md (jobs 3a, 3b, 3c).
 # Each job is its own status check, so layer 4 can require them one by one.
-# Action versions are pinned to releases at least 21 days old.
+# Actions are pinned to full commit SHAs (tag in the comment), releases at least 21 days old.
 name: CI
 
 on:
@@ -20,7 +20,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: pnpm format:check
       - run: pnpm lint --max-warnings 0
@@ -28,21 +28,21 @@ jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: pnpm typecheck
 
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: pnpm test
 
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: pnpm build
 
@@ -51,7 +51,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - run: scripts/check-suppressions.sh "origin/$BASE_REF"
@@ -64,7 +64,7 @@ jobs:
     env:
       GITLEAKS_VERSION: 8.30.1
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Install gitleaks (checksum verified)
@@ -92,7 +92,7 @@ jobs:
     container:
       image: semgrep/semgrep:1.182.0
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: >-
           semgrep scan --error --metrics=off
           --config p/typescript --config p/react --config p/owasp-top-ten
@@ -101,7 +101,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/dependency-review-action@v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
