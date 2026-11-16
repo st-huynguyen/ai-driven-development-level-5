@@ -31,7 +31,7 @@ pnpm exec next typegen    # regenerate route types (PageProps/LayoutProps) witho
 
 ## Merge policy (GitHub)
 
-`main` is protected by the `main-protection` ruleset, created by the owner in the GitHub UI (not stored in the repo; the checklist is in `docs/level-5-enforcement.md`). Changes reach `main` only through a pull request with all 8 checks green and the branch up to date; force push and deletion are blocked. If you rename or add a CI job, the required check list in the ruleset must be updated by the owner, so say so in the PR. `.github/CODEOWNERS` lists the files that set the rules (lint/type/format config, `package.json`, hooks, CI, scripts, agent instructions); changing them needs the owner's attention, so call them out in the PR description.
+`main` is protected by the `main-protection` ruleset, defined in `.github/rulesets/main-protection.json` and applied to GitHub by the owner (the file has no effect by itself; how to apply it is in `docs/level-5-enforcement.md`). Changes reach `main` only through a pull request with all 8 checks green and the branch up to date; force push and deletion are blocked. If you rename or add a CI job, update `required_status_checks` in that JSON file in the same PR and say in the PR that the owner must re-apply the ruleset. `.github/CODEOWNERS` lists the files that set the rules (lint/type/format config, `package.json`, hooks, CI, scripts, agent instructions); changing them needs the owner's attention, so call them out in the PR description.
 
 Tests for the hook and CI scripts: `bash .claude/hooks/test-guards.sh`, `bash .claude/hooks/test-format-lint.sh`, `bash scripts/check-suppressions.test.sh`.
 

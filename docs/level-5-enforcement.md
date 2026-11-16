@@ -128,11 +128,11 @@ _Chạy trên GitHub server._
 
 ### Khi merge PR vào `main`, và mọi lần push vào `main` (tức thì)
 
-|              |                                                                                                                                                                                                             |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mục đích** | Đảm bảo không có code nào vào `main` mà chưa qua CI xanh và review của người. Lớp này biến kết quả của lớp 3 thành điều kiện bắt buộc để merge                                                              |
-| **Cấu hình** | Ruleset `main-protection`: owner tạo trên GitHub UI (Settings → Rules → Rulesets) theo checklist bên dưới, không lưu thành file trong repo<br>`.github/CODEOWNERS`: các file "luật chơi" và owner của chúng |
-| **Thực thi** | GitHub; điều kiện chưa đủ → nút Merge bị khóa                                                                                                                                                               |
+|              |                                                                                                                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mục đích** | Đảm bảo không có code nào vào `main` mà chưa qua CI xanh và review của người. Lớp này biến kết quả của lớp 3 thành điều kiện bắt buộc để merge                                                                           |
+| **Cấu hình** | Ruleset `main-protection`: định nghĩa trong `.github/rulesets/main-protection.json`, owner áp dụng lên GitHub (file trong repo tự nó không có hiệu lực)<br>`.github/CODEOWNERS`: các file "luật chơi" và owner của chúng |
+| **Thực thi** | GitHub; điều kiện chưa đủ → nút Merge bị khóa                                                                                                                                                                            |
 
 **Kiểm tra:**
 
@@ -146,7 +146,15 @@ _Chạy trên GitHub server._
   - Cấm force push, cấm xóa nhánh
   - Danh sách bypass để trống
 
-### Checklist tạo ruleset `main-protection` (owner làm trên GitHub)
+### Áp dụng ruleset (owner làm)
+
+File `.github/rulesets/main-protection.json` là nguồn sự thật. GitHub không tự đọc file này, owner phải áp dụng:
+
+- Tạo lần đầu: Settings → Rules → Rulesets → New ruleset → **Import a ruleset** → chọn file, hoặc `gh api -X POST repos/<owner>/<repo>/rulesets --input .github/rulesets/main-protection.json`
+- Cập nhật: sửa file qua PR, merge, rồi `gh api -X PUT repos/<owner>/<repo>/rulesets/<id> --input .github/rulesets/main-protection.json` (lấy `<id>` bằng `gh api repos/<owner>/<repo>/rulesets`)
+- Không sửa ruleset trực tiếp trên UI mà không cập nhật file, nếu không file và cấu hình thật sẽ lệch nhau
+
+### Checklist ruleset `main-protection` (nội dung của file JSON)
 
 - **Enforcement status:** Active · **Bypass list:** để trống
 - **Target branches:** Add target → _Include default branch_
