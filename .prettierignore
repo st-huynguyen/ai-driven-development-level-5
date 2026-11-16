@@ -1,0 +1,4 @@
+# Prettier also respects .gitignore (.next, node_modules, env files...).
+pnpm-lock.yaml
+# Managed by `next dev`, which re-writes its block.
+AGENTS.md
