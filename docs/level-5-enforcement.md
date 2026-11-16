@@ -94,28 +94,31 @@ _Chạy trên GitHub Actions runner._
 
 ### Event `pull_request` → các job chạy song song (5–10 phút)
 
-|              |                                                                                                                                                                         |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mục đích** | Kiểm tra đầy đủ trên môi trường sạch, không phụ thuộc máy của ai. Bắt những gì lọt qua local (hook bị tắt, `--no-verify`), các thủ thuật lách check, và lỗ hổng bảo mật |
-| **Cấu hình** | `.github/workflows/ci.yml` (job 3a, 3b, 3c)<br>`.github/workflows/claude-review.yml` (job 3d)<br>Secret: `ANTHROPIC_API_KEY`                                            |
-| **Thực thi** | GitHub Actions; mỗi job → một status check trên PR                                                                                                                      |
+|              |                                                                                                                                                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mục đích** | Kiểm tra đầy đủ trên môi trường sạch, không phụ thuộc máy của ai. Bắt những gì lọt qua local (hook bị tắt, `--no-verify`), các thủ thuật lách check, và lỗ hổng bảo mật                                                                |
+| **Cấu hình** | `.github/workflows/ci.yml` (job 3a, 3b, 3c)<br>`.github/actions/setup/action.yml` (cài pnpm, Node theo `.nvmrc`, dependencies)<br>`.github/workflows/claude-review.yml` (job 3d, làm ở PR sau)<br>Secret: `ANTHROPIC_API_KEY` (cho 3d) |
+| **Thực thi** | GitHub Actions; mỗi job → một status check trên PR. Version action được pin vào bản phát hành ít nhất 21 ngày                                                                                                                          |
 
-**Kiểm tra:**
+**Kiểm tra** (tên job = tên status check):
 
 - **3a · Chất lượng, toàn repo**
-  - `prettier --check .`
-  - `eslint . --max-warnings 0`
-  - `tsc --noEmit` · `vitest run` · `next build`
-- **3b · Chống lách check**
-  - Script `scripts/check-suppressions.sh`: fail nếu diff thêm `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `nosemgrep`
+  - `lint`: `pnpm format:check` + `pnpm lint --max-warnings 0`
+  - `typecheck`: `pnpm typecheck`
+  - `test`: `pnpm test`
+  - `build`: `pnpm build`
+- **3b · Chống lách check** (chỉ chạy trên PR)
+  - `suppressions`: `scripts/check-suppressions.sh` fail nếu các dòng _được thêm_ so với nhánh base có `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `nosemgrep`, `gitleaks:allow`. Bỏ qua file `.md`, `.claude/hooks/` và chính script. Lỗi hiện thành annotation trên diff của PR
 - **3c · Bảo mật**
-  - Secret: `gitleaks`
-  - SAST: `semgrep scan --error`
-  - Dependency: `actions/dependency-review-action`
-- **3d · Reviewer agent (tốn token)**
+  - `gitleaks`: CLI gitleaks (kiểm checksum khi tải) quét các commit của PR; push vào `main` thì quét toàn bộ lịch sử
+  - `semgrep`: `semgrep scan --error` với `p/typescript`, `p/react`, `p/owasp-top-ten`
+  - `dependency-review` (chỉ chạy trên PR): `actions/dependency-review-action`, `fail-on-severity: high`
+- **3d · Reviewer agent (tốn token, làm ở PR sau)**
   - `anthropics/claude-code-action@v1`, chỉ-đọc, chỉ comment blocking
 
 > Job 3d nằm trong workflow riêng để có thể bật sau cùng hoặc tắt khi cần tiết kiệm, không ảnh hưởng `ci.yml`.
+
+> Ở lớp 3, check đỏ chỉ báo lỗi, chưa chặn được merge. Lớp 4 mới biến các check này thành điều kiện bắt buộc.
 
 ---
 

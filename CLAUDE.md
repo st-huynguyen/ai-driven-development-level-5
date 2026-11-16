@@ -25,6 +25,12 @@ pnpm exec next typegen    # regenerate route types (PageProps/LayoutProps) witho
 
 `lefthook.yml` is installed by `pnpm install` (the `prepare` script). `pre-commit` runs Prettier, ESLint and gitleaks on staged files; `pre-push` runs `pnpm typecheck` and `pnpm test`. gitleaks must be installed on the machine (`brew install gitleaks`). Never skip the hooks (`--no-verify`): fix what they report. Write commit messages with `git commit -F <file>` when the message mentions env file names, because `.claude/hooks/guard-bash.sh` blocks commands containing them.
 
+## CI (GitHub Actions)
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`, one job per status check: `lint`, `typecheck`, `test`, `build`, `suppressions`, `gitleaks`, `semgrep`, `dependency-review`. Shared setup lives in `.github/actions/setup`. `suppressions` fails when a change adds `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `nosemgrep` or `gitleaks:allow`; check locally with `scripts/check-suppressions.sh main`. Pin new action versions to exact releases at least 21 days old.
+
+Tests for the hook and CI scripts: `bash .claude/hooks/test-guards.sh`, `bash .claude/hooks/test-format-lint.sh`, `bash scripts/check-suppressions.test.sh`.
+
 The user's global pnpm config has `minimum-release-age` (21 days), so `pnpm add <pkg>@latest` resolves to the newest version at least 21 days old, not the true latest. Respect this; don't override it.
 
 ## Stack
