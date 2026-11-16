@@ -27,7 +27,7 @@ pnpm exec next typegen    # regenerate route types (PageProps/LayoutProps) witho
 
 ## CI (GitHub Actions)
 
-`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`, one job per status check: `lint`, `typecheck`, `test`, `build`, `suppressions`, `gitleaks`, `semgrep`, `dependency-review`. Shared setup lives in `.github/actions/setup`. `suppressions` fails when a change adds `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `nosemgrep` or `gitleaks:allow`; check locally with `scripts/check-suppressions.sh main`. Pin every action to the full commit SHA of a release at least 21 days old, with the tag in a comment (`uses: owner/action@<sha> # vX.Y.Z`); semgrep fails on tag-only pins.
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`, one job per status check: `lint`, `typecheck`, `test`, `build`, `suppressions`, `gitleaks`, `semgrep`, `dependency-review`. Shared setup lives in `.github/actions/setup`. `suppressions` fails when a change adds `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `nosemgrep` or `gitleaks:allow`; check locally with `scripts/check-suppressions.sh main`. ESLint has `noInlineConfig: true`, so comments in source files can't switch rules off or reconfigure them (`lint` fails on them). Pin every action to the full commit SHA of a release at least 21 days old, with the tag in a comment (`uses: owner/action@<sha> # vX.Y.Z`); semgrep fails on tag-only pins. Pin container images by digest (`image:tag@sha256:...`) and downloaded binaries by sha256 written in the workflow; update the pin together with the version.
 
 ## Merge policy (GitHub)
 

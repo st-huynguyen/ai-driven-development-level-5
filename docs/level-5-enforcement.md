@@ -31,12 +31,14 @@ _Chạy trong session của agent (máy local)._
 **Kiểm tra:**
 
 - **matcher `Bash`**
-  - `rm -rf`, `git push --force`, `git reset --hard`
-  - Bỏ qua lớp 2: `--no-verify`, `git commit -n`, `LEFTHOOK=0`, đổi `core.hooksPath`, `lefthook uninstall`
-  - Migrate / push DB khi không phải môi trường local
-  - Lệnh chạm tới `.env*` (ví dụ `cat .env`)
+  - `rm -rf`, `git push --force`, `git reset --hard`, kể cả khi đứng sau `do`/`then`/`xargs`/`find -exec`/`sudo`/`env`, gọi bằng đường dẫn (`/bin/rm`) hoặc có tuỳ chọn toàn cục (`git -C <dir>`)
+  - Bỏ qua lớp 2: `--no-verify`, `git commit -n`, `LEFTHOOK=0`, `LEFTHOOK_EXCLUDE`/`LEFTHOOK_CONFIG`/`LEFTHOOK_BIN`, `lefthook-local.yml`, `.git/hooks`, đổi `core.hooksPath`, `lefthook uninstall`
+  - Migrate / push DB khi không phải môi trường local. Nếu lệnh không đặt `DATABASE_URL` và môi trường cũng không có, **mọi** file env có `DATABASE_URL` đều phải trỏ về local, vì mỗi tool đọc file khác nhau (Prisma CLI chỉ đọc `.env`)
+  - Lệnh chạm tới `.env*` (ví dụ `cat .env`), không phân biệt hoa thường (`.ENV.local`), kể cả glob ngoài dấu nháy (`.en?.local`, `.e*`) và brace (`{.env.local,}`). Tên như `.envrc` không bị chặn
 - **matcher `Read|Edit|MultiEdit|Write|Grep`**
-  - Đường dẫn `.env*`, trừ `.env.example`
+  - Đường dẫn `.env*` (không phân biệt hoa thường, kể cả glob của Grep), trừ `.env.example`
+  - `Edit`/`Write` vào `.git/hooks/` hoặc `lefthook-local.yml`
+- Logic nhận diện tên file env dùng chung ở `.claude/hooks/env-names.sh`
 
 ### 1b. Ngay sau khi agent sửa file: `PostToolUse` (1–3 giây)
 
@@ -108,10 +110,10 @@ _Chạy trên GitHub Actions runner._
   - `test`: `pnpm test`
   - `build`: `pnpm build`
 - **3b · Chống lách check** (chỉ chạy trên PR)
-  - `suppressions`: `scripts/check-suppressions.sh` fail nếu các dòng _được thêm_ so với nhánh base có `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `nosemgrep`, `gitleaks:allow`. Bỏ qua file `.md`, `.claude/hooks/` và chính script. Lỗi hiện thành annotation trên diff của PR
+  - `suppressions`: `scripts/check-suppressions.sh` fail nếu các dòng _được thêm_ so với nhánh base có `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `nosemgrep`, `gitleaks:allow`. Bỏ qua file `.md`, `.claude/hooks/` và chính script. Lỗi hiện thành annotation trên diff của PR. Comment cấu hình rule inline (`/* eslint rule: "off" */`) thì do ESLint chặn tận gốc: `eslint.config.mjs` đặt `noInlineConfig: true` nên job `lint` fail
 - **3c · Bảo mật**
-  - `gitleaks`: CLI gitleaks (kiểm checksum khi tải) quét các commit của PR; push vào `main` thì quét toàn bộ lịch sử
-  - `semgrep`: `semgrep scan --error` với `p/typescript`, `p/react`, `p/owasp-top-ten`
+  - `gitleaks`: CLI gitleaks (kiểm sha256 ghim sẵn trong workflow khi tải) quét các commit của PR; push vào `main` thì quét toàn bộ lịch sử
+  - `semgrep`: image `semgrep/semgrep` ghim theo digest, `semgrep scan --error` với `p/typescript`, `p/react`, `p/owasp-top-ten`
   - `dependency-review` (chỉ chạy trên PR): `actions/dependency-review-action`, `fail-on-severity: high`
 - **3d · Reviewer agent (tốn token, làm ở PR sau)**
   - `anthropics/claude-code-action@v1`, chỉ-đọc, chỉ comment blocking
