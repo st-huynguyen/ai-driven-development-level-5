@@ -1,34 +1,35 @@
 # Layer 4 of docs/level-5-enforcement.md: files that set the rules of the game.
-# Owners get asked to review changes to them. The review becomes mandatory once
-# "Require review from Code Owners" is on in the main-protection ruleset, which stays
-# off while the repo has a single owner (an author cannot approve their own PR).
+# The main-protection ruleset requires a code owner's approval for any PR that changes them.
+# A line with several owners needs one approval from any of them, and an author cannot
+# approve their own PR, so with two owners each one reviews the other's changes.
+# Owners must have write access to the repo, or GitHub ignores them.
 # When several lines match a file, the last one wins.
 
 # Lint, type, format and test config
-/eslint.config.mjs          @st-huynguyen
-/tsconfig.json              @st-huynguyen
-/.prettierrc.json           @st-huynguyen
-/.prettierignore            @st-huynguyen
-/vitest.config.mts          @st-huynguyen
-/next.config.ts             @st-huynguyen
+/eslint.config.mjs           @st-huynguyen @bd-huynguyen
+/tsconfig.json               @st-huynguyen @bd-huynguyen
+/.prettierrc.json            @st-huynguyen @bd-huynguyen
+/.prettierignore             @st-huynguyen @bd-huynguyen
+/vitest.config.mts           @st-huynguyen @bd-huynguyen
+/next.config.ts              @st-huynguyen @bd-huynguyen
 
 # Scripts that CI runs, package manager and runtime versions
-/package.json               @st-huynguyen
-/pnpm-workspace.yaml        @st-huynguyen
-/.nvmrc                     @st-huynguyen
+/package.json                @st-huynguyen @bd-huynguyen
+/pnpm-workspace.yaml         @st-huynguyen @bd-huynguyen
+/.nvmrc                      @st-huynguyen @bd-huynguyen
 
 # Ways to silence the security scanners (files may not exist yet)
-/.semgrepignore             @st-huynguyen
-/.gitleaks.toml             @st-huynguyen
-/.gitleaksignore            @st-huynguyen
+/.semgrepignore              @st-huynguyen @bd-huynguyen
+/.gitleaks.toml              @st-huynguyen @bd-huynguyen
+/.gitleaksignore             @st-huynguyen @bd-huynguyen
 
 # Layer 1 agent hooks, layer 2 git hooks, layer 3 CI and checker scripts
-/.claude/                   @st-huynguyen
-/lefthook.yml               @st-huynguyen
-/scripts/                   @st-huynguyen
-/.github/                   @st-huynguyen
+/.claude/                    @st-huynguyen @bd-huynguyen
+/lefthook.yml                @st-huynguyen @bd-huynguyen
+/scripts/                    @st-huynguyen @bd-huynguyen
+/.github/                    @st-huynguyen @bd-huynguyen
 
 # Instructions that steer the agents, and the enforcement plan itself
-/CLAUDE.md                  @st-huynguyen
-/AGENTS.md                  @st-huynguyen
-/docs/level-5-enforcement.md @st-huynguyen
+/CLAUDE.md                   @st-huynguyen @bd-huynguyen
+/AGENTS.md                   @st-huynguyen @bd-huynguyen
+/docs/level-5-enforcement.md @st-huynguyen @bd-huynguyen

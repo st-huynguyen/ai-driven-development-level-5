@@ -140,8 +140,9 @@ _Chạy trên GitHub server._
   - Bắt buộc qua pull request
   - Required status checks: 8 job của lớp 3 xanh (3d thêm vào khi có)
   - Nhánh phải cập nhật theo `main`
-  - Approval: **0** khi repo chỉ có một người, đặt **1** khi có thêm người có quyền write
-  - Code owner duyệt các file trong `.github/CODEOWNERS`: **tạm tắt** khi chỉ có một owner, vì tác giả không tự approve PR của mình được
+  - Approval: **1**, từ người khác người push cuối cùng
+  - Code owner duyệt các file trong `.github/CODEOWNERS`: **bật**. Có hai owner (`@st-huynguyen`, `@bd-huynguyen`) để người này duyệt thay đổi của người kia, vì tác giả không tự approve PR của mình được
+  - Push mới vào PR làm mất approval cũ, phải duyệt lại
 - **Bảo vệ nhánh**
   - Cấm force push, cấm xóa nhánh
   - Danh sách bypass để trống
@@ -161,9 +162,10 @@ File `.github/rulesets/main-protection.json` là nguồn sự thật. GitHub kh�
 - ✓ **Restrict deletions**
 - ✓ **Block force pushes**
 - ✓ **Require a pull request before merging**
-  - Required approvals: **0**
+  - Required approvals: **1**
   - ✓ Dismiss stale pull request approvals when new commits are pushed
-  - ☐ Require review from Code Owners (bật khi có owner thứ hai)
+  - ✓ Require review from Code Owners
+  - ✓ Require approval of the most recent reviewable push
   - ✓ Require conversation resolution before merging
 - ✓ **Require status checks to pass**
   - ✓ Require branches to be up to date before merging
@@ -172,12 +174,11 @@ File `.github/rulesets/main-protection.json` là nguồn sự thật. GitHub kh�
 
 ### Khi nào đổi cấu hình
 
-| Tình huống                           | Đổi gì                                                                                         |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| Có thêm người có quyền write         | Required approvals → 1                                                                         |
-| `CODEOWNERS` có từ hai owner trở lên | Bật _Require review from Code Owners_ và _Require approval of the most recent reviewable push_ |
-| Thêm hoặc đổi tên job trong `ci.yml` | Cập nhật danh sách required checks cho khớp tên, nếu không PR sẽ chờ mãi một check không chạy  |
-| Có job 3d (reviewer agent)           | Thêm check của job đó vào danh sách                                                            |
+| Tình huống                           | Đổi gì                                                                                                                                                                                                                              |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Thêm hoặc bớt code owner             | Sửa `CODEOWNERS` và merge **trước** khi đổi ruleset: GitHub đọc `CODEOWNERS` từ nhánh base, và owner phải có quyền write. Luôn giữ ít nhất hai owner, nếu không PR sửa file "luật chơi" của owner duy nhất sẽ không ai approve được |
+| Thêm hoặc đổi tên job trong `ci.yml` | Cập nhật danh sách required checks cho khớp tên, nếu không PR sẽ chờ mãi một check không chạy                                                                                                                                       |
+| Có job 3d (reviewer agent)           | Thêm check của job đó vào danh sách                                                                                                                                                                                                 |
 
 ### Kiểm chứng lớp 4 đang hoạt động
 
