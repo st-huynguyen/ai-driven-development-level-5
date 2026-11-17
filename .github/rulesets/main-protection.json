@@ -36,7 +36,8 @@
           { "context": "suppressions", "integration_id": 15368 },
           { "context": "gitleaks", "integration_id": 15368 },
           { "context": "semgrep", "integration_id": 15368 },
-          { "context": "dependency-review", "integration_id": 15368 }
+          { "context": "dependency-review", "integration_id": 15368 },
+          { "context": "claude-review", "integration_id": 15368 }
         ]
       }
     }
