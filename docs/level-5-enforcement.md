@@ -96,11 +96,11 @@ _Chạy trên GitHub Actions runner._
 
 ### Event `pull_request` → các job chạy song song (5–10 phút)
 
-|              |                                                                                                                                                                                                                                        |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mục đích** | Kiểm tra đầy đủ trên môi trường sạch, không phụ thuộc máy của ai. Bắt những gì lọt qua local (hook bị tắt, `--no-verify`), các thủ thuật lách check, và lỗ hổng bảo mật                                                                |
-| **Cấu hình** | `.github/workflows/ci.yml` (job 3a, 3b, 3c)<br>`.github/actions/setup/action.yml` (cài pnpm, Node theo `.nvmrc`, dependencies)<br>`.github/workflows/claude-review.yml` (job 3d, làm ở PR sau)<br>Secret: `ANTHROPIC_API_KEY` (cho 3d) |
-| **Thực thi** | GitHub Actions; mỗi job → một status check trên PR. Action được pin theo commit SHA đầy đủ (tag ghi trong comment) của bản phát hành ít nhất 21 ngày, vì tag có thể bị dời sang commit khác                                            |
+|              |                                                                                                                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mục đích** | Kiểm tra đầy đủ trên môi trường sạch, không phụ thuộc máy của ai. Bắt những gì lọt qua local (hook bị tắt, `--no-verify`), các thủ thuật lách check, và lỗ hổng bảo mật                                                  |
+| **Cấu hình** | `.github/workflows/ci.yml` (job 3a, 3b, 3c)<br>`.github/actions/setup/action.yml` (cài pnpm, Node theo `.nvmrc`, dependencies)<br>`.github/workflows/claude-review.yml` (job 3d)<br>Secret: `ANTHROPIC_API_KEY` (cho 3d) |
+| **Thực thi** | GitHub Actions; mỗi job → một status check trên PR. Action được pin theo commit SHA đầy đủ (tag ghi trong comment) của bản phát hành ít nhất 21 ngày, vì tag có thể bị dời sang commit khác                              |
 
 **Kiểm tra** (tên job = tên status check):
 
@@ -115,10 +115,17 @@ _Chạy trên GitHub Actions runner._
   - `gitleaks`: CLI gitleaks (kiểm sha256 ghim sẵn trong workflow khi tải) quét các commit của PR; push vào `main` thì quét toàn bộ lịch sử
   - `semgrep`: image `semgrep/semgrep` ghim theo digest, `semgrep scan --error` với `p/typescript`, `p/react`, `p/owasp-top-ten`
   - `dependency-review` (chỉ chạy trên PR): `actions/dependency-review-action`, `fail-on-severity: high`
-- **3d · Reviewer agent (tốn token, làm ở PR sau)**
-  - `anthropics/claude-code-action@v1`, chỉ-đọc, chỉ comment blocking
+- **3d · Reviewer agent (tốn token)**
+  - `claude-review`: `anthropics/claude-code-action` (model `claude-sonnet-5-5`, tối đa 15 lượt) review toàn bộ diff của PR theo quy tắc trong `CLAUDE.md`
+  - Chỉ-đọc: không có `Edit`/`Write`; Bash chỉ được `git diff` và `gh pr comment`. Không có `gh pr view` để comment của người ngoài trên PR (repo public) không vào context của agent
+  - Checkout đúng commit head của PR (`head.sha`), diff bằng `git diff origin/<base>...HEAD`, nên file agent đọc, diff và SHA trong comment là của cùng một commit
+  - Chỉ nêu lỗi nghiêm trọng (blocking): bug làm sai hoặc crash, lỗ hổng bảo mật, mất dữ liệu, vi phạm quy tắc `CLAUDE.md` mà lint/type/test/scanner không bắt được. Mỗi lỗi có `file:line`, lý do và kịch bản cụ thể. Không comment format, style, gợi ý cải thiện
+  - Mỗi commit được review có **một comment mới** (dòng đầu: `Review cho commit <sha>`); không có lỗi thì ghi "Không có lỗi nghiêm trọng." Comment thường, không phải thread inline, nên không bị rule resolve conversation chặn merge
+  - Không chặn merge vì nội dung review: job xanh khi review xong, người review quyết định. Required check chỉ đảm bảo mỗi PR đã qua reviewer agent
+  - Push commit mới khi review cũ chưa xong → review cũ bị hủy (`concurrency`), chỉ commit mới nhất được review
+  - Bỏ qua (check tính là đạt): PR draft (review khi chuyển ready), PR từ fork và PR của bot (không có secret)
 
-> Job 3d nằm trong workflow riêng để có thể bật sau cùng hoặc tắt khi cần tiết kiệm, không ảnh hưởng `ci.yml`.
+> Job 3d nằm trong workflow riêng để có thể tắt khi cần tiết kiệm, không ảnh hưởng `ci.yml`.
 
 > Ở lớp 3, check đỏ chỉ báo lỗi, chưa chặn được merge. Lớp 4 mới biến các check này thành điều kiện bắt buộc.
 
@@ -140,7 +147,7 @@ _Chạy trên GitHub server._
 
 - **Điều kiện để merge**
   - Bắt buộc qua pull request
-  - Required status checks: 8 job của lớp 3 xanh (3d thêm vào khi có)
+  - Required status checks: 9 job của lớp 3 xanh (8 job của 3a–3c và `claude-review` của 3d)
   - Nhánh phải cập nhật theo `main`
   - Approval: **1**, từ người khác người push cuối cùng
   - Code owner duyệt các file trong `.github/CODEOWNERS`: **bật**. Có hai owner (`@st-huynguyen`, `@bd-huynguyen`) để người này duyệt thay đổi của người kia, vì tác giả không tự approve PR của mình được
@@ -171,7 +178,7 @@ File `.github/rulesets/main-protection.json` là nguồn sự thật. GitHub kh�
   - ✓ Require conversation resolution before merging
 - ✓ **Require status checks to pass**
   - ✓ Require branches to be up to date before merging
-  - 8 check, nguồn **GitHub Actions**, tên phải khớp tên job: `lint`, `typecheck`, `test`, `build`, `suppressions`, `gitleaks`, `semgrep`, `dependency-review`
+  - 9 check, nguồn **GitHub Actions**, tên phải khớp tên job: `lint`, `typecheck`, `test`, `build`, `suppressions`, `gitleaks`, `semgrep`, `dependency-review`, `claude-review`
 - Để trống **Restrict updates** (rule này chặn cả việc merge PR)
 
 ### Khi nào đổi cấu hình
@@ -180,15 +187,15 @@ File `.github/rulesets/main-protection.json` là nguồn sự thật. GitHub kh�
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Thêm hoặc bớt code owner             | Sửa `CODEOWNERS` và merge **trước** khi đổi ruleset: GitHub đọc `CODEOWNERS` từ nhánh base, và owner phải có quyền write. Luôn giữ ít nhất hai owner, nếu không PR sửa file "luật chơi" của owner duy nhất sẽ không ai approve được |
 | Thêm hoặc đổi tên job trong `ci.yml` | Cập nhật danh sách required checks cho khớp tên, nếu không PR sẽ chờ mãi một check không chạy                                                                                                                                       |
-| Có job 3d (reviewer agent)           | Thêm check của job đó vào danh sách                                                                                                                                                                                                 |
+| Tắt job 3d để tiết kiệm token        | Bỏ `claude-review` khỏi danh sách required checks, nếu không PR sẽ chờ mãi một check không chạy                                                                                                                                     |
 
 ### Kiểm chứng lớp 4 đang hoạt động
 
 | Kiểm tra                         | Lệnh hoặc chỗ xem                                                                       | Kỳ vọng                                                                                                       |
 | -------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | Rule có hiệu lực trên `main`     | `gh api repos/<owner>/<repo>/rules/branches/main --jq '.[].type'`                       | `deletion`, `non_fast_forward`, `pull_request`, `required_status_checks`                                      |
-| Đủ 8 check bắt buộc              | Như trên, lọc `required_status_checks` → `.parameters.required_status_checks[].context` | Đúng 8 tên                                                                                                    |
-| PR đủ điều kiện thì merge được   | `gh pr view <n> --json mergeStateStatus` (PR không phải draft, 8 check xanh)            | `CLEAN`                                                                                                       |
+| Đủ 9 check bắt buộc              | Như trên, lọc `required_status_checks` → `.parameters.required_status_checks[].context` | Đúng 9 tên                                                                                                    |
+| PR đủ điều kiện thì merge được   | `gh pr view <n> --json mergeStateStatus` (PR không phải draft, 9 check xanh)            | `CLEAN`                                                                                                       |
 | PR có check đỏ bị chặn           | `gh pr view <n> --json mergeStateStatus` (PR không phải draft, có check bắt buộc đỏ)    | `BLOCKED`, trên UI hiện _"Merging is blocked"_                                                                |
 | `CODEOWNERS` hợp lệ              | `gh api repos/<owner>/<repo>/codeowners/errors`                                         | `{"errors":[]}`                                                                                               |
 | Push thẳng vào `main` bị từ chối | `git push origin HEAD:main` (chỉ thử khi các mục trên đã đạt)                           | `GH013: Repository rule violations found for refs/heads/main` … _Changes must be made through a pull request_ |
