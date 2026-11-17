@@ -19,9 +19,12 @@ excludes=(
 findings="$(
   git diff --unified=0 --no-color --no-ext-diff "$base...HEAD" -- . "${excludes[@]}" |
     awk -v pat="$patterns" '
-      /^\+\+\+ / { file = substr($0, 7); next }               # "+++ b/<path>"
-      /^@@/      { split($3, a, ","); line = substr(a[1], 2) + 0; next }  # "@@ -a,b +c,d @@"
-      /^\+/      { if ($0 ~ pat) printf "%s\t%d\t%s\n", file, line, substr($0, 2); line++ }
+      # File headers sit between "diff --git" and the first "@@". Inside a hunk, an added
+      # line whose text starts with "++ " also begins with "+++ ", so only trust it here.
+      /^diff --git / { header = 1; next }
+      header && /^\+\+\+ / { file = substr($0, 7); next }    # "+++ b/<path>"
+      /^@@/      { header = 0; split($3, a, ","); line = substr(a[1], 2) + 0; next }  # "@@ -a,b +c,d @@"
+      !header && /^\+/ { if ($0 ~ pat) printf "%s\t%d\t%s\n", file, line, substr($0, 2); line++ }
     '
 )"
 
